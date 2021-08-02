@@ -46,4 +46,62 @@ class Agent:
         # Agent 클래스의 상태
         self.ratio_hold = 0 # 주식 보유 비율
         self.ratio_portfolio_value = 0 # 포트폴리오 가치 비율
-        
+
+    def reset(self):
+        self.balance = self.initial_balance
+        self.num_stocks = 0
+        self.portfolio_value = self.initial_balance
+        self.base_portfolio_value = self.initial_balance
+        self.num_buy = 0
+        self.num_sell = 0
+        self.num_hold = 0
+        self.immediate_reward = 0
+        self.ratio_hold = 0
+        self.ratio_portfolio_value = 0
+
+    def reset_exploration(self):
+        self.exploration_base = 0.5 + np.random.rand() / 2
+
+    def set_balance(self, balance):
+        self.initial_balance = balance
+
+    def get_states(self):
+        self.ratio_hold = self.num_stocks / int(self.portfolio_value / self.environment.get_price())
+        self.ratio_portfolio_value = (self.portfolio_value / self.base_portfolio_value)
+        return (
+            self.ratio_hold ,
+            self.ratio_portfolio_value
+        )
+
+    def decide_action(self, pred_value, pred_policy, epsilon):
+        confidence = 0.
+
+        pred = pred_policy
+        if pred is None:
+            pred = pred_value
+
+        if pred is None:
+            # 예측 값이 없을 경우 탐험
+            epsilon = 1
+        else:
+            # 값이 모두 같은 경우 탐험
+            maxpred = np.max(pred)
+            if (pred == maxpred).all():
+                epsilon = 1
+        # 탐험 결정
+        if np.random.rand() < epsilon:
+            exploration  = True
+            if np.random.rand() < self.exploration_base:
+                action = self.ACTION_BUY
+            else:
+                action = np.random.randint(self.NUM_ACTIONS -1) + 1
+        else:
+            exploration = False
+            action  = np.argmax(pred)
+        confidence = 0.5
+        if pred_policy is not None:
+            confidence = pred[action]
+        elif pred_value is not None:
+            confidence = utils.sigmoid(pred[action])
+
+        return action, confidence, exploration
