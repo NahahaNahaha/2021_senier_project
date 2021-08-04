@@ -107,7 +107,7 @@ class Agent:
         return action, confidence, exploration
 
 
-    def validate_action(self, action):
+    def validate_action(self, action):  # 유효성 검사 함수 (내가 가진 자금으로 살 수 있는 지 혹은 팔 수 있는 상황인지)
         if action == Agent.ACTION_BUY:
             # 적어도 1주를 살 수 있는지 확인
             if self.balance < self.environment.get_price() * (
@@ -118,3 +118,14 @@ class Agent:
             if self.num_stocks <= 0:
                 return False
         return True
+
+    def decide_trading_unit(self, confidence):  # 주식 거래 단위 결정 함수
+        if np.isnan(confidence):
+            return self.min_trading_unit
+        added_traiding = max(min(
+            int(confidence * (self.max_trading_unit -
+                              self.min_trading_unit)),
+            self.max_trading_unit - self.min_trading_unit
+        ), 0)
+        return self.min_trading_unit + added_traiding
+
