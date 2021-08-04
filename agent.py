@@ -129,3 +129,58 @@ class Agent:
         ), 0)
         return self.min_trading_unit + added_traiding
 
+    def act(self, action, confidence):  # 매수 매도 액션 함수
+        if not self.validate_action(action):
+            action = Agent.ACTION_HOLD
+
+        # 환경에서 현재 가격 얻기
+        curr_price = self.environment.get_price()
+
+        # 즉시 보상 초기화
+        self.immediate_reward = 0
+
+        # 매수
+        if action == Agent.ACTION_BUY:
+            # 매수할 단위를 판단
+            trading_unit = self.decide_trading_unit(confidence)
+            balance = (
+                    self.balance - curr_price * (1 + self.TRADING_CHARGE) \
+                    * trading_unit
+            )
+            # 보유 현금이 모자랄 경우 보유 현금으로 가능한 만큼 최대한 매수
+            if balance < 0:
+                trading_unit = max(
+                    min(
+                        int(self.balance / (
+                                curr_price * (1 + self.TRADING_CHARGE))),
+                        self.max_trading_unit
+                    ),
+                    self.min_trading_unit
+                )
+            # 수수료를 적용하여 총 매수 금액 산정
+            invest_amount = curr_price * (1 + self.TRADING_CHARGE) \
+                            * trading_unit
+            if invest_amount > 0:
+                self.balance -= invest_amount  # 보유 현금을 갱신
+                self.num_stocks += trading_unit  # 보유 주식 수를 갱신
+                self.num_buy += 1  # 매수 횟수 증가
+
+        # 매도
+        elif action == Agent.ACTION_SELL:
+            # 매도할 단위를 판단
+            trading_unit = self.decide_trading_unit(confidence)
+            # 보유 주식이 모자랄 경우 가능한 만큼 최대한 매도
+            trading_unit = min(trading_unit, self.num_stocks)
+            # 매도
+            invest_amount = curr_price * (
+                    1 - (self.TRADING_TAX + self.TRADING_CHARGE)) \
+                            * trading_unit
+            if invest_amount > 0:
+                self.num_stocks -= trading_unit  # 보유 주식 수를 갱신
+                self.balance += invest_amount  # 보유 현금을 갱신
+                self.num_sell += 1  # 매도 횟수 증가
+
+        # 홀딩
+        elif action == Agent.ACTION_HOLD:
+            self.num_hold += 1  # 홀딩 횟수 증가
+            
