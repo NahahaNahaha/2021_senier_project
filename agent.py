@@ -183,4 +183,31 @@ class Agent:
         # 홀딩
         elif action == Agent.ACTION_HOLD:
             self.num_hold += 1  # 홀딩 횟수 증가
-            
+
+        # 포트폴리오 가치 갱신
+        self.portfolio_value = self.balance + curr_price \
+                               * self.num_stocks
+        self.profitloss = (
+                (self.portfolio_value - self.initial_balance) \
+                / self.initial_balance
+        )
+
+        # 즉시 보상 - 수익률
+        self.immediate_reward = self.profitloss
+
+        # 지연 보상 - 익절, 손절 기준
+        delayed_reward = 0
+        self.base_profitloss = (
+                (self.portfolio_value - self.base_portfolio_value) \
+                / self.base_portfolio_value
+        )
+        if self.base_profitloss > self.delayed_reward_threshold or \
+                self.base_profitloss < -self.delayed_reward_threshold:
+            # 목표 수익률 달성하여 기준 포트폴리오 가치 갱신
+            # 또는 손실 기준치를 초과하여 기준 포트폴리오 가치 갱신
+            self.base_portfolio_value = self.portfolio_value
+            delayed_reward = self.immediate_reward
+        else:
+            delayed_reward = 0
+
+        return self.immediate_reward, delayed_reward
