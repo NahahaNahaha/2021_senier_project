@@ -48,13 +48,13 @@ class Agent:
         self.ratio_portfolio_value = 0 # 포트폴리오 가치 비율
 
     def reset(self):
-        self.balance = self.initial_balance
-        self.num_stocks = 0
-        self.portfolio_value = self.initial_balance
-        self.base_portfolio_value = self.initial_balance
-        self.num_buy = 0
-        self.num_sell = 0
-        self.num_hold = 0
+        self.balance = self.initial_balance # 현재 현금 잔고
+        self.num_stocks = 0 # 들고 있는 주식 수
+        self.portfolio_value = self.initial_balance # 포트 폴리오 가치, 초기에는 가지고 있는 현금 잔고와 동일
+        self.base_portfolio_value = self.initial_balance # 포트 폴리오 기저 가치
+        self.num_buy = 0 # 산 횟수
+        self.num_sell = 0 # 판 횟수
+        self.num_hold = 0 # 홀드 횟수
         self.immediate_reward = 0
         self.ratio_hold = 0
         self.ratio_portfolio_value = 0
